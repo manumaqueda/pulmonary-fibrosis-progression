@@ -60,12 +60,9 @@ the ML model built as part of this project is contribute and improve other model
 The objective of the competition is to obtain good predictions for the follow-up patient's FVC measurements. In particular,
 the evaluation metric for those measurements is as follows:
 
-$
-\displaystyle \sigma_{clipped} = \max \left ( \sigma, 70 \right ) \\
-\displaystyle \Delta = \min \left ( \|FVC_{ture} - FVC_{predicted}\|, 1000 \right ) \\
-\displaystyle f_{metric} = - \frac{\sqrt{2} \Delta}{\sigma_{clipped}} - \ln \left( \sqrt{2} \sigma_{clipped} \right) .
-$
-
+<img src="https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle%20%5Csigma_%7Bclipped%7D%20%3D%20%5Cmax%20%5Cleft%20(%20%5Csigma%2C%2070%20%5Cright%20)%20%5C%5C"><br/><br/>
+<img src="https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle%20%5CDelta%20%3D%20%5Cmin%20%5Cleft%20(%20%5C%7CFVC_%7Bture%7D%20-%20FVC_%7Bpredicted%7D%5C%7C%2C%201000%20%5Cright%20)%20%5C%5C%0A"><br/><br/>
+<img src="https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle%20f_%7Bmetric%7D%20%3D%20-%20%5Cfrac%7B%5Csqrt%7B2%7D%20%5CDelta%7D%7B%5Csigma_%7Bclipped%7D%7D%20-%20%5Cln%20%5Cleft(%20%5Csqrt%7B2%7D%20%5Csigma_%7Bclipped%7D%20%5Cright)%20."/><br/><br/>
 
 ### Project Design
 
@@ -81,5 +78,5 @@ looking at some image properties.
 I will also do some research in some of the public notebooks in the competition to re-use and improve suggested techniques.
 
 ### Reference
-[Kaggle Competition](https://www.kaggle.com/c/osic-pulmonary-fibrosis-progression/overview)
-[Scikit Linear Models](https://scikit-learn.org/stable/modules/linear_model.html)
+* [Kaggle Competition](https://www.kaggle.com/c/osic-pulmonary-fibrosis-progression/overview)
+* [Scikit Linear Models](https://scikit-learn.org/stable/modules/linear_model.html)
