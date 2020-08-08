@@ -6,4 +6,6 @@ numpydoc==0.8.0
 pandas==1.0.5
 pandocfilters==1.4.2
 pydicom==2.0.0
+torch==1.6.0
 seaborn==0.10.1
+scikit-learn==0.23.2
