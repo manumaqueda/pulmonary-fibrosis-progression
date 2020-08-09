@@ -150,8 +150,8 @@ def metric_loss(pred_fvc,true_fvc):
     return metric
 
 
-def save_model_params(model, model_dir):
-    model_info_path = os.path.join(args.model_dir, 'model_info.pth')
+def save_model_params(model_dir):
+    model_info_path = os.path.join(model_dir, 'model_info.pth')
     with open(model_info_path, 'wb') as f:
         model_info = {
             'in_tabular_features': args.in_tabular_features,
