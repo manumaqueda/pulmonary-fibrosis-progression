@@ -49,7 +49,7 @@ def _get_train_loader(batch_size, data_dir):
     print("Get data loader.")
 
     # read in csv file - with FVC in first column, then rest of features
-    train_data = pd.read_csv(os.path.join(data_dir, "train.csv"), header=None, names=None)
+    train_data = pd.read_csv(os.path.join(data_dir, "pp_train.csv"), header=None, names=None)
 
     # labels are first column
     train_y = torch.from_numpy(train_data[[0]].values).float().squeeze()
@@ -121,7 +121,7 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
         all_preds =torch.FloatTensor(all_preds)
         all_targets =torch.FloatTensor(all_targets)
         # metric loss used for loss calculation of validation ds
-        val_metric_loss = metric_loss(all_preds, all_targets)
+        val_metric_loss = metric_loss(device, all_preds, all_targets)
         val_metric_loss = torch.mean(val_metric_loss).tolist()
         # https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
         lr_scheduler.step()
@@ -140,7 +140,7 @@ def quantile_loss(preds, target, quantiles):
     return loss
 
 
-def metric_loss(pred_fvc,true_fvc):
+def metric_loss(device, pred_fvc,true_fvc):
     #Implementation of the metric in pytorch
     sigma = pred_fvc[:, 2] - pred_fvc[:, 0]
     true_fvc=torch.reshape(true_fvc,pred_fvc[:,1].shape)
@@ -160,6 +160,30 @@ def save_model_params(model_dir):
         torch.save(model_info, f)
 
 
+def main(arguments):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # set the seed for generating random numbers
+    torch.manual_seed(arguments.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(arguments.seed)
+
+    # get train loader
+    train_loader = _get_train_loader(arguments.batch_size, arguments.data_dir) # data_dir from above..
+
+
+    ## Build model
+    model = QuantileModel().to(device)
+    params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = Adam(params, lr=arguments.lr)
+    # to optimise the lr
+    lr_scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
+    save_model_params(model, arguments.model_dir)
+
+    # Trains the model (given line of code, which calls the above training function)
+    train(model, train_loader, arguments.epochs, optimizer, lr_scheduler, device, arguments.quantiles, arguments.model_dir)
+
+
 if __name__ == '__main__':
     # All of the model parameters and training parameters are sent as arguments
     # when this script is executed, during a training job
@@ -169,10 +193,10 @@ if __name__ == '__main__':
 
     # SageMaker parameters, like the directories for training data and saving models; set automatically
     # Do not need to change
-    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
-    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
-    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
-    parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAIN'])
+   #parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    #parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--model-dir', type=str)
+    parser.add_argument('--data-dir', type=str)
 
     # Training Parameters, given
     parser.add_argument('--batch-size', type=int, default=32, metavar='N',
@@ -190,25 +214,4 @@ if __name__ == '__main__':
     parser.add_argument('--quantiles', '--list', nargs='+', default=[0.2, 0.5, 0.8], help='Quantiles', required=True)
 
     args = parser.parse_args()
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # set the seed for generating random numbers
-    torch.manual_seed(args.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(args.seed)
-
-    # get train loader
-    train_loader = _get_train_loader(args.batch_size, args.data_dir) # data_dir from above..
-
-
-    ## Build model
-    model = QuantileModel().to(device)
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = Adam(params, lr=args.lr)
-    # to optimise the lr
-    lr_scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
-    save_model_params(model, args.model_dir)
-
-    # Trains the model (given line of code, which calls the above training function)
-    train(model, train_loader, args.epochs, optimizer, lr_scheduler, device, args.quantiles, args.model_dir)
+    main(args)
