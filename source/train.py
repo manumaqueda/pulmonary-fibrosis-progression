@@ -1,9 +1,7 @@
 from __future__ import print_function # future proof
 import argparse
-import sys
 import os
-import json
-from datetime import time, timedelta
+import time
 
 import pandas as pd
 import numpy as np
@@ -49,7 +47,8 @@ def _get_train_loader(batch_size, data_dir):
     print("Get data loader.")
 
     # read in csv file - with FVC in first column, then rest of features
-    train_data = pd.read_csv(os.path.join(data_dir, "pp_train.csv"), header=None, names=None)
+    train_data = pd.read_csv(filepath_or_buffer=os.path.join(data_dir, "pp_train.csv"), header=None, names=None)
+    print(train_data.head())
 
     # labels are first column
     train_y = torch.from_numpy(train_data[[0]].values).float().squeeze()
@@ -87,7 +86,7 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
     """
 
     for epoch in range(epochs):
-        start_time = time()
+        start_time = time.time()
         itr = 1
         model.train()
         train_losses =[]
@@ -117,7 +116,7 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
             with torch.set_grad_enabled(False):
                 preds = model(inputs)
                 all_preds.extend(preds.detach().cpu().numpy().tolist())
-                all_targets.extend(targets.numpy().tolist()) # np.append(an_array, row_to_append, 0)
+                all_targets.extend(targets.numpy().tolist())
         all_preds =torch.FloatTensor(all_preds)
         all_targets =torch.FloatTensor(all_targets)
         # metric loss used for loss calculation of validation ds
@@ -125,8 +124,11 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
         val_metric_loss = torch.mean(val_metric_loss).tolist()
         # https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
         lr_scheduler.step()
-        print(f"Epoch #{epoch+1}","Training loss : {0:.4f}".format(np.mean(train_losses)),"Validation LLL : {0:.4f}".format(val_metric_loss),"Time taken :",str(timedelta(seconds=time() - start_time))[:7])
-        torch.save(copy.deepcopy(model.state_dict()), model_dir)
+        elapsed_time = time.time() - start_time
+        print(f"Epoch #{epoch+1}","Training loss : {0:.4f}".format(np.mean(train_losses)),
+              "Validation LLL : {0:.4f}".format(val_metric_loss),
+              f"Time taken : {elapsed_time * 1000} milliseconds")
+        torch.save(copy.deepcopy(model.state_dict()), model_dir+'model.pth')
 
 
 def quantile_loss(preds, target, quantiles):
@@ -155,7 +157,7 @@ def save_model_params(model_dir):
     with open(model_info_path, 'wb') as f:
         model_info = {
             'in_tabular_features': args.in_tabular_features,
-            'quantiles': args.out_quantiles
+            'quantiles': args.quantiles
         }
         torch.save(model_info, f)
 
@@ -173,12 +175,12 @@ def main(arguments):
 
 
     ## Build model
-    model = QuantileModel().to(device)
+    model = QuantileModel(arguments.in_tabular_features, len(args.quantiles)).to(device)
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = Adam(params, lr=arguments.lr)
     # to optimise the lr
     lr_scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
-    save_model_params(model, arguments.model_dir)
+    save_model_params(arguments.model_dir)
 
     # Trains the model (given line of code, which calls the above training function)
     train(model, train_loader, arguments.epochs, optimizer, lr_scheduler, device, arguments.quantiles, arguments.model_dir)
@@ -201,7 +203,7 @@ if __name__ == '__main__':
     # Training Parameters, given
     parser.add_argument('--batch-size', type=int, default=32, metavar='N',
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--epochs', type=int, default=1000, metavar='N',
+    parser.add_argument('--epochs', type=int, default=150, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=3e-3, metavar='LR',
                         help='learning rate (default: 0.003)')
@@ -211,7 +213,8 @@ if __name__ == '__main__':
     # Model parameters
     parser.add_argument('--in_tabular_features', type=int, default=9, metavar='IF',
                         help='number of input features')
-    parser.add_argument('--quantiles', '--list', nargs='+', default=[0.2, 0.5, 0.8], help='Quantiles', required=True)
+    parser.add_argument('--quantiles', type=str, default='0.2,0.5,0.8', help='Quantiles', required=True)
 
     args = parser.parse_args()
+    args.quantiles = [float(item) for item in args.quantiles.split(',')]
     main(args)

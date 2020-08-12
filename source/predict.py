@@ -32,7 +32,7 @@ def model_fn(model_dir):
 
     # Determine the device and construct the model.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = QuantileModel(model_info['in_tabular_features'], model_info['out_quantiles'])
+    model = QuantileModel(model_info['in_tabular_features'], len(model_info['quantiles']))
 
     # Load the stored model parameters.
     model_path = os.path.join(model_dir, 'model.pth')
@@ -69,7 +69,7 @@ def predict_fn(input_data, model):
 
     # Process input_data so that it is ready to be sent to our model
     # convert data to numpy array then to Tensor
-    data = torch.from_numpy(input_data.astype('float32'))
+    data = torch.from_numpy(input_data.drop([0], axis=1).values.astype('float32'))
     data = data.to(device)
 
     # Put model into evaluation mode
@@ -81,3 +81,17 @@ def predict_fn(input_data, model):
     result = out.cpu().detach().numpy()
 
     return result
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model-dir', type=str)
+    parser.add_argument('--data-dir', type=str)
+    args = parser.parse_args()
+    model = model_fn(args.model_dir)
+    input_data = pd.read_csv(
+        filepath_or_buffer=os.path.join(args.data_dir, "pp_test.csv"),
+        header=None, names=None)
+    results = predict_fn(input_data, model)
+    print(results)
+
+    ## TODO, PREDICTIONS ARE RUBISH, PROBABLY IS NOT TRAINING OR THE STATE NOT WELL SAVED
