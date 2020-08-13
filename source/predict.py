@@ -91,7 +91,16 @@ if __name__ == '__main__':
     input_data = pd.read_csv(
         filepath_or_buffer=os.path.join(args.data_dir, "pp_test.csv"),
         header=None, names=None)
-    results = predict_fn(input_data, model)
-    print(results)
-
-    ## TODO, PREDICTIONS ARE RUBISH, PROBABLY IS NOT TRAINING OR THE STATE NOT WELL SAVED
+    results_df = pd.read_csv(
+        filepath_or_buffer=os.path.join(args.data_dir, "results.csv"),
+        header=0, names=None)
+    predictions_df = pd.DataFrame(predict_fn(input_data, model))
+    results_df['FVC'] = predictions_df[1]
+    results_df['Confidence'] = predictions_df[2] - predictions_df[0]
+    results_df.Weeks = results_df.Weeks.astype('str')
+    results_df['Patient_Week'] = results_df['Patient'] + '_' + results_df['Weeks']
+    results_df = results_df.drop(columns=['Patient', 'Weeks'])
+    results_df_cols = list(results_df.columns)
+    results_df_cols[0], results_df_cols[1], results_df_cols[2] = results_df_cols[2], results_df_cols[0], results_df_cols[1]
+    results_df = results_df[results_df_cols]
+    results_df.to_csv('data/submission.csv', index=False)

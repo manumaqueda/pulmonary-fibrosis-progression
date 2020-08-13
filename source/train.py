@@ -102,12 +102,13 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
                 train_losses.append(loss.tolist())
                 loss.backward()
                 optimizer.step()
-            if itr % 50 == 0:
-                print(f"Epoch #{epoch+1} Iteration #{itr} loss: {loss}")
+            if itr % 10 == 0:
+                print(f"[TRAIN] Epoch #{epoch+1} Iteration #{itr} quantile loss: {loss}")
             itr += 1
         model.eval()
         all_preds = []
         all_targets = []
+        itr = 1
         for batch in train_loader['val']:
             batch_x, batch_y = batch
             inputs = batch_x.float().to(device)
