@@ -1,6 +1,7 @@
 from __future__ import print_function # future proof
 import argparse
 import os
+import json
 import time
 
 import pandas as pd
@@ -16,7 +17,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
 # import model
-from source.model import QuantileModel
+from model import QuantileModel
 
 
 def model_fn(model_dir):
@@ -50,16 +51,16 @@ def _get_train_loader(batch_size, data_dir):
     train_data = pd.read_csv(filepath_or_buffer=os.path.join(data_dir, "pp_train.csv"), header=None, names=None)
     print(train_data.head())
 
-    # labels are first column
-    train_y = torch.from_numpy(train_data[[0]].values).float().squeeze()
+    # labels are first colum
+    train_y = train_data[[0]].values
     # features are the rest apart from fvc
-    train_x = torch.from_numpy(train_data.drop([0], axis=1).values).float()
+    train_x = train_data.drop([0], axis=1).values
 
     X_train, X_val, y_train, y_val = train_test_split(train_x, train_y, test_size=0.33, random_state=42)
 
     # create datasets
-    train_ds = torch.utils.data.TensorDataset(X_train, y_train)
-    val_ds = torch.utils.data.TensorDataset(X_val, y_val)
+    train_ds = torch.utils.data.TensorDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).float().squeeze())
+    val_ds = torch.utils.data.TensorDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).float().squeeze())
 
     dataloaders = {
         'train': DataLoader(train_ds, batch_size=batch_size,
@@ -129,7 +130,7 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
         print(f"Epoch #{epoch+1}","Training loss : {0:.4f}".format(np.mean(train_losses)),
               "Validation LLL : {0:.4f}".format(val_metric_loss),
               f"Time taken : {elapsed_time * 1000} milliseconds")
-        torch.save(copy.deepcopy(model.state_dict()), model_dir+'model.pth')
+        torch.save(copy.deepcopy(model.state_dict()), os.path.join(model_dir, 'model.pth'))
 
 
 def quantile_loss(preds, target, quantiles):
@@ -196,10 +197,10 @@ if __name__ == '__main__':
 
     # SageMaker parameters, like the directories for training data and saving models; set automatically
     # Do not need to change
-   #parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
-    #parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
-    parser.add_argument('--model-dir', type=str)
-    parser.add_argument('--data-dir', type=str)
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
+    parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAIN'])
 
     # Training Parameters, given
     parser.add_argument('--batch-size', type=int, default=32, metavar='N',

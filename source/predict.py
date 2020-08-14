@@ -13,7 +13,7 @@ from io import StringIO
 from six import BytesIO
 
 # import model
-from source.model import QuantileModel
+from model import QuantileModel
 
 # accepts and returns numpy data
 CONTENT_TYPE = 'application/x-npy'
@@ -69,7 +69,7 @@ def predict_fn(input_data, model):
 
     # Process input_data so that it is ready to be sent to our model
     # convert data to numpy array then to Tensor
-    data = torch.from_numpy(input_data.drop([0], axis=1).values.astype('float32'))
+    data = torch.from_numpy(input_data)
     data = data.to(device)
 
     # Put model into evaluation mode
