@@ -23,8 +23,8 @@ from model import QuantileModel
 def model_fn(model_dir):
     """
     This method initialises the model from the model_dir and loads it for training purposes
-    :param model_dir:
-    :return:
+    :param model_dir: model directory
+    :return: model
     """
     print("Loading model.")
 
@@ -52,9 +52,9 @@ def model_fn(model_dir):
 def _get_train_loader(batch_size, data_dir):
     """
     Method that prepares the training and validation datasets using the data_dir and an expected file called pp_train.csv
-    :param batch_size:
-    :param data_dir:
-    :return:
+    :param batch_size: for each batch
+    :param data_dir: data dir
+    :return: dataloaders for training script
     """
     print("Get data loader.")
 
@@ -147,9 +147,9 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
 def quantile_loss(preds, target, quantiles):
     """
     Implements quantile loss function
-    :param preds:
-    :param target:
-    :param quantiles:
+    :param preds: nn output
+    :param target: labels
+    :param quantiles: quantiles
     :return:
     """
     #assert not target.requires_grad
@@ -165,7 +165,7 @@ def quantile_loss(preds, target, quantiles):
 def metric_loss(device, pred_fvc,true_fvc):
     """
     Impletments Laplace Log Likehood loss function
-    :param device:
+    :param device: 
     :param pred_fvc:
     :param true_fvc:
     :return:
