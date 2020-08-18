@@ -5,12 +5,13 @@ from sklearn import preprocessing
 
 
 def preprocess_data(train_df, test_df, submission_df):
-    '''Processes and normalises both train dataset in order to prepare the data for the NN.
-        It also calculates
-            - weeks_from_min: number of weeks since first visit
-            - min_FVC: value of FVC in the first visit (base visit)
-       :param data_df: data dataframe which corresponds with the format of the traindataset
-    '''
+    """
+    Pre-processing of the train and test dataset: it creates pp_train.csv and pp_test.csv for training and inference
+    :param train_df:
+    :param test_df:
+    :param submission_df:
+    :return:
+    """
     train_c_df = train_df.copy()
     test_c_df = test_df.copy()
     train_c_df['mode'] = 1  # train

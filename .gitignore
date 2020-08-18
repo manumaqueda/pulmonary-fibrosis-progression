@@ -5,3 +5,4 @@ data.zip
 .ipynb_checkpoints/
 *.ica
 source/__pycache__/
+*.pages

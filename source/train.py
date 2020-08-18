@@ -21,6 +21,11 @@ from model import QuantileModel
 
 
 def model_fn(model_dir):
+    """
+    This method initialises the model from the model_dir and loads it for training purposes
+    :param model_dir:
+    :return:
+    """
     print("Loading model.")
 
     # First, load the parameters used to create the model.
@@ -45,6 +50,12 @@ def model_fn(model_dir):
 
 # Load the training data from a csv file
 def _get_train_loader(batch_size, data_dir):
+    """
+    Method that prepares the training and validation datasets using the data_dir and an expected file called pp_train.csv
+    :param batch_size:
+    :param data_dir:
+    :return:
+    """
     print("Get data loader.")
 
     # read in csv file - with FVC in first column, then rest of features
@@ -134,6 +145,13 @@ def train(model, train_loader, epochs, optimizer, lr_scheduler, device, quantile
 
 
 def quantile_loss(preds, target, quantiles):
+    """
+    Implements quantile loss function
+    :param preds:
+    :param target:
+    :param quantiles:
+    :return:
+    """
     #assert not target.requires_grad
     assert len(preds) == len(target)
     losses = []
@@ -145,6 +163,13 @@ def quantile_loss(preds, target, quantiles):
 
 
 def metric_loss(device, pred_fvc,true_fvc):
+    """
+    Impletments Laplace Log Likehood loss function
+    :param device:
+    :param pred_fvc:
+    :param true_fvc:
+    :return:
+    """
     #Implementation of the metric in pytorch
     sigma = pred_fvc[:, 2] - pred_fvc[:, 0]
     true_fvc=torch.reshape(true_fvc,pred_fvc[:,1].shape)
@@ -155,6 +180,11 @@ def metric_loss(device, pred_fvc,true_fvc):
 
 
 def save_model_params(model_dir):
+    """
+    Saves the input params of the model
+    :param model_dir:
+    :return:
+    """
     model_info_path = os.path.join(model_dir, 'model_info.pth')
     with open(model_info_path, 'wb') as f:
         model_info = {

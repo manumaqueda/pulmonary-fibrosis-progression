@@ -20,7 +20,11 @@ CONTENT_TYPE = 'application/x-npy'
 
 
 def model_fn(model_dir):
-    """Load the PyTorch model from the `model_dir` directory."""
+    """
+    Loads the trained model into memory
+    :param model_dir:
+    :return:
+    """
     print("Loading model.")
 
     # First, load the parameters used to create the model.
@@ -47,6 +51,11 @@ def model_fn(model_dir):
 
 
 def input_fn(serialized_input_data, content_type):
+    """
+    :param serialized_input_data:
+    :param content_type:
+    :return:
+    """
     print('Deserializing the input data.')
     if content_type == CONTENT_TYPE:
         stream = BytesIO(serialized_input_data)
@@ -64,6 +73,12 @@ def output_fn(prediction_output, accept):
 
 
 def predict_fn(input_data, model):
+    """
+    Method that accepts input data to be passed to the model in evaluation form. T
+    :param input_data:
+    :param model:
+    :return: model predictions
+    """
     print('Predicting class labels for the input data...')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
